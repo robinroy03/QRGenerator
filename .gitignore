@@ -161,9 +161,3 @@ cython_debug/
 
 # VS Code
 .vscode
-
-# Custom
-*.svg
-*.png
-*.jpg
-*.jpeg

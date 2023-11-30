@@ -1,40 +1,44 @@
 import streamlit as st
 import segno
+import time
+import datetime
 
+
+def datetime_to_unix(dt: datetime.datetime):
+    return int(time.mktime(dt.timetuple()))
 
 def generate_qr(qr_prompt: str):
-    return segno.make_qr(qr_prompt).svg_data_uri(scale = 100)
-
-def download_qr(qr_prompt: str):
-    return segno.make_qr(qr_prompt).save("qr.png", scale = 100)
+    unix_time = datetime_to_unix(datetime.datetime.now())
+    path = f'./generated/qr_{unix_time}.png'
+    segno.make_qr(qr_prompt).save(path, scale=10)
+    return path
 
 
 def main():
-    with st.sidebar:
-        st.markdown("""
-                A simple webapp for easy QR code generation.\n
-                Idk why ppl put paywall over this.
+    st.sidebar.markdown("""
+            A simple webapp for easy QR code generation.\n
+            Idk why ppl put paywall over this.
+            
+            A very quick hack to give a free QR code generation portal.\n
+            Repo is [here](https://github.com/robinroy03/QRGenerator)
                 
-                A very quick hack to give a free QR code generation portal.\n
-                Repo is [here](https://github.com/robinroy03/QRGenerator)
-                    
-                __Interesting features we can add :)__\n
-                Make the generation colourful using some huggingface models like [this](https://huggingface.co/spaces/huggingface-projects/QR-code-AI-art-generator)\n
-                More customization options (size, orientation ...)    
-                """)
+            __Interesting features we can add :)__\n
+            Make the generation colourful using some huggingface models like [this](https://huggingface.co/spaces/huggingface-projects/QR-code-AI-art-generator)\n
+            More customization options (size, orientation ...)    
+            """)
 
-    with st.form(key = "form"):
-        qr_prompt = st.text_area(label = "Enter the QR value to be entered")
+    prompt = st.text_input("Enter the text to be encoded")
+    if prompt is not None and prompt != "":
+        path = generate_qr(prompt)
+        st.image(path, use_column_width=True)
 
-        generate = st.form_submit_button("Generate")
-        if generate and qr_prompt != "":
-            st.image(generate_qr(qr_prompt))
-        
-        download = st.form_submit_button("Download")
-        if download and qr_prompt != "":
-            download_qr(qr_prompt)
-            st.success("QR has been downloaded successfully!")
-
+        with open(path, "rb") as file:
+            download_btn = st.download_button(
+                label="Download QR",
+                data=file,
+                file_name="qr.png",
+                mime="image/png",
+            )
 
 
 if __name__ == "__main__":
