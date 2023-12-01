@@ -1,18 +1,16 @@
 import streamlit as st
 import segno
-import time
-import datetime
+import io
 
 
-def datetime_to_unix(dt: datetime.datetime):
-    return int(time.mktime(dt.timetuple()))
+def generate_qr(qr_prompt: str) -> str:
+    return segno.make_qr(qr_prompt).svg_data_uri(scale = 100)
 
-def generate_qr(qr_prompt: str):
-    unix_time = datetime_to_unix(datetime.datetime.now())
-    path = f'./generated/qr_{unix_time}.png'
-    segno.make_qr(qr_prompt).save(path, scale=10)
-    return path
-
+def get_qr_binary(qr_prompt: str) -> bytes:
+    buff = io.BytesIO()
+    segno.make(qr_prompt).save(buff, kind="png", scale=100)
+    buff.seek(0)
+    return buff.read()
 
 def main():
     st.sidebar.markdown("""
@@ -29,16 +27,16 @@ def main():
 
     prompt = st.text_input("Enter the text to be encoded")
     if prompt is not None and prompt != "":
-        path = generate_qr(prompt)
-        st.image(path, use_column_width=True)
+        generated = generate_qr(prompt)
+        st.image(generated, use_column_width=True)
 
-        with open(path, "rb") as file:
-            download_btn = st.download_button(
-                label="Download QR",
-                data=file,
-                file_name="qr.png",
-                mime="image/png",
-            )
+        qr_binary = get_qr_binary(prompt)
+        download_btn = st.download_button(
+            label="Download QR",
+            data=qr_binary,
+            file_name="qr.png",
+            mime="image/png",
+        )
 
 
 if __name__ == "__main__":
